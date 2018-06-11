@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+
+ERROR_NOTROOT=85
+VSCODE_URL="https://vscode-update.azurewebsites.net/latest/linux-deb-x64/stable"
+
+error_handler () {
+    if [[ $? == "0" ]]; then
+        echo "Success"
+    else
+        echo "Error occurred in $1 doing $2"
+    fi
+}
+
+download_vscode () {
+    echo "Downloading last version of VSCode"
+    curl -Lv -# -o "/tmp/code.deb" "$VSCODE_URL"
+    error_handler "download_vscode"
+    echo "Done"
+}
+
+install_vscode () {
+    dpkg -i "/tmp/code.deb"
+    error_handler "install_vscode" "Installing code.deb"
+    rm -f "/tmp/code.deb"
+    error_handler "install_vscode" "deleting code.deb file"
+    echo "Done"
+}
+
+if [[ $UID -ne $ROOT_UID ]]; then
+    echo "You must run this command as root"
+    exit $ERROR_NOTROOT
+fi
+
+download_vscode
+install_vscode
+
+exit $?
