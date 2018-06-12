@@ -1,0 +1,29 @@
+#!/usr/bin/env node
+
+const { exec } = require('child_process')
+
+const cep = `viacep.com.br/ws/` +
+  `${process.argv[2] || '01001000'}/json`
+
+const showResult = (address) => {
+  if (!address.cep) {
+    console.log('\n**\tNenhum endereço encontrado.\t**\n')
+    return
+  }
+  console.log(`\tEndereço encontrado:\n` +
+    `CEP: \t\t\t${address.cep}\n` +
+    `Logradouro: \t\t${address.logradouro}\n` +
+    `Complemento: \t\t${address.complemento}\n` +
+    `Bairro: \t\t${address.bairro}\n` +
+    `Localidade: \t\t${address.localidade}\n` +
+    `UF: \t\t\t${address.uf}\n`)
+}
+
+exec(`curl ${cep}`, (err, stdout, stderr) => {
+  if (err) {
+    console.log(`Error during the process.` +
+      `\nDescription: ${err}`)
+    return
+  }
+  showResult(JSON.parse(stdout))
+})
