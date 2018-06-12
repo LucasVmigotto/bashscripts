@@ -1,0 +1,33 @@
+#!/usr/bin/env node
+
+const { exec } = require('child_process')
+const api = 'https://api.promasters.net.br/cotacao/v1/valores'
+
+const localCurrency = process.argv[2] || 1.00
+
+const calc = (value) => {
+  return (value * localCurrency).toFixed(2)
+}
+
+const showExchange = ({ USD, EUR, ARS, GBP, BTC }) => {
+  console.log(`\n\t\tValores convertidos\n` +
+    `Real:\t\t\t\t\t R\u0024 ${localCurrency}\n` + 
+    `Dólar:\t\t\t\t\t \u0024 ${calc(USD.valor)}\n` +
+    `Euro:\t\t\t\t\t \u20AC ${calc(EUR.valor)}\n` +
+    `Peso Argentino:\t\t\t\t AR\u0024 ${calc(ARS.valor)}\n` +
+    `Libra Esterlina:\t\t\t \u00A3 ${calc(GBP.valor)}\n` +
+    `Bitcoin:\t\t\t\t XBT ${calc(BTC.valor)}\n`)
+}
+
+const currencyExchange = () => {
+  exec(`curl ${api}`, (err, stdout, stderr) => {
+    if (err) {
+      console.log(`A ${err.name} error occurred\n` +
+        `Error description: ${err.description}`)
+      return
+    }
+    showExchange(JSON.parse(stdout).valores)
+  })
+}
+
+currencyExchange()
