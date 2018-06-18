@@ -12,8 +12,8 @@ const api = (currency = '') => {
 
 let firstArg
 
-const calc = (value) => {
-  return (value * firstArg).toFixed(2)
+const calc = (value, toConvert = firstArg) => {
+  return (value * toConvert).toFixed(2)
 }
 
 const checkStatus = (data) => {
@@ -46,13 +46,10 @@ const currencyExchange = () => {
   })
 }
 
-const convert = (value) => {
-  return (process.argv[3] * value).toFixed(2)
-}
-
 const showConvert = (value) => {
+  const toConvert = process.argv[3] || 1.00 
   console.log(`\n\t\tValor convertido\n` +
-    `${process.argv[2]} ${process.argv[3]}\t\t\t\t R\u0024 ${convert(value)}\n`)
+    `${process.argv[2]} ${toConvert}\t\t\t\t\t R\u0024 ${calc(value, toConvert)}\n`)
 }
 
 const convertValue = () => {
@@ -67,7 +64,7 @@ const convertValue = () => {
     if (data.valores.USD) {
       showConvert(data.valores.USD.valor)
     } else if (data.valores.EUR) {
-      showCOnvert(data.valores.EUR.valor)
+      showConvert(data.valores.EUR.valor)
     } else if (data.valores.ARS) {
       showConvert(data.valores.ARS.valor)
     } else if (data.valores.GBP) {
@@ -78,8 +75,9 @@ const convertValue = () => {
   })
 }
 
-if (RegExp(/^[0-9]/).test(process.argv[2])) {
-  firstArg = process.argv[2] || 1.00
+firstArg = process.argv[2] || 1.00
+if (RegExp(/^[0-9]/).test(process.argv[2]) ||
+  !process.argv[2]) {
   currencyExchange()
 } else {
   convertValue()
