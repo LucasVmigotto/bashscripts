@@ -1,17 +1,31 @@
 #!/usr/bin/env node
 
 const { exec } = require('child_process')
-const api = 'https://api.promasters.net.br/cotacao/v1/valores'
+const url = 'https://api.promasters.net.br/cotacao/v1/valores'
+const api = (currency = '') => {
+  if (!currency) {
+    return `${url}`
+  } else {
+    return `${url}?moedas=${currency}`
+  }
+}
 
-const localCurrency = process.argv[2] || 1.00
+let firstArg
 
 const calc = (value) => {
-  return (value * localCurrency).toFixed(2)
+  return (value * firstArg).toFixed(2)
+}
+
+const checkStatus = (data) => {
+  if (!data.status) {
+    console.log(`Invalid Input '${process.argv[2]}'`)
+    process.exit()
+  }
 }
 
 const showExchange = ({ USD, EUR, ARS, GBP, BTC }) => {
   console.log(`\n\t\tValores convertidos\n` +
-    `Real:\t\t\t\t\t R\u0024 ${localCurrency}\n` + 
+    `Real:\t\t\t\t\t R\u0024 ${firstArg}\n` + 
     `Dólar:\t\t\t\t\t \u0024 ${calc(USD.valor)}\n` +
     `Euro:\t\t\t\t\t \u20AC ${calc(EUR.valor)}\n` +
     `Peso Argentino:\t\t\t\t AR\u0024 ${calc(ARS.valor)}\n` +
@@ -20,14 +34,53 @@ const showExchange = ({ USD, EUR, ARS, GBP, BTC }) => {
 }
 
 const currencyExchange = () => {
-  exec(`curl ${api}`, (err, stdout, stderr) => {
+  exec(`curl ${api()}`, (err, stdout) => {
     if (err) {
       console.log(`A ${err.name} error occurred\n` +
-        `Error description: ${err.description}`)
+        `Error description: ${err.message}`)
       return
     }
-    showExchange(JSON.parse(stdout).valores)
+    const data = JSON.parse(stdout)
+    checkStatus(data)
+    showExchange(data.valores)
   })
 }
 
-currencyExchange()
+const convert = (value) => {
+  return (process.argv[3] * value).toFixed(2)
+}
+
+const showConvert = (value) => {
+  console.log(`\n\t\tValor convertido\n` +
+    `${process.argv[2]} ${process.argv[3]}\t\t\t\t R\u0024 ${convert(value)}\n`)
+}
+
+const convertValue = () => {
+  exec(`curl ${api(process.argv[2])}`, (err, stdout) => {
+    if (err) {
+      console.log(`A ${err.name} error occurred\n` +
+        `Error description: ${err.message}`)
+      return
+    }
+    const data = JSON.parse(stdout)
+    checkStatus(data)
+    if (data.valores.USD) {
+      showConvert(data.valores.USD.valor)
+    } else if (data.valores.EUR) {
+      showCOnvert(data.valores.EUR.valor)
+    } else if (data.valores.ARS) {
+      showConvert(data.valores.ARS.valor)
+    } else if (data.valores.GBP) {
+      showConvert(data.valores.GBP.valor)
+    } else {
+      showConvert(data.valores.BTC.valor)
+    }
+  })
+}
+
+if (RegExp(/^[0-9]/).test(process.argv[2])) {
+  firstArg = process.argv[2] || 1.00
+  currencyExchange()
+} else {
+  convertValue()
+}
