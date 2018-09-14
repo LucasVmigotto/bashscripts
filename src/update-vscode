@@ -7,6 +7,7 @@ error_handler () {
   if [[ $? == "0" ]]; then
       echo "Success"
   else
+      exit $?
       echo "Error occurred in $1 doing $2"
   fi
 }
@@ -19,7 +20,7 @@ download_vscode () {
 }
 
 install_vscode () {
-  dpkg -i "/tmp/code.deb"
+  dpkg -i -E "/tmp/code.deb"
   error_handler "install_vscode" "Installing code.deb"
   rm -f "/tmp/code.deb"
   error_handler "install_vscode" "deleting code.deb file"
