@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+
+GIST_URL="https://gist.github.com/47904ee4f36b70c9d84a30d29d996aed.git"
+
+error_handler () {
+    if [[ "$?" -ne 0 ]]; then
+        echo "Error in $1 doing $2"
+        exit 1
+    fi
+}
+
+download_error_handler () {
+    if [[ "$?" -ne 0 ]]; then
+        echo "Error downloading $1"
+    else
+        echo -e "Done\n"
+    fi
+}
+
+gitInstalled () {
+    which git
+    if [[  "$?" -ne 0 ]]; then
+        echo -e "Git is not installed\n"\
+            "Please run 'sudo apt-get install git' and try again"
+        exit 1
+    fi
+}
+
+getExtensionsIds () {
+    git clone -q "$GIST_URL" "/tmp/gist"
+    error_handler "getExtensionsIds" "cloning gist"
+    echo -e "\n" >> /tmp/gist/vscode-extensions
+    error_handler "addNewLine" "adding new line to the end of the file"
+    while read ext; do
+        EXTENSIONS+=("$ext")
+    done < /tmp/gist/vscode-extensions
+    rm -rf "/tmp/gist"
+}
+
+install_extension () {
+    code --install-extension "$1";
+    download_error_handler "$1"
+}
+
+gitInstalled
+
+getExtensionsIds
+
+for ext in "${EXTENSIONS[@]}"; do
+    if [[ "$ext" != "" ]]; then
+        install_extension "$ext"
+    else
+        exit 0
+    fi
+done
+
+exit $?
