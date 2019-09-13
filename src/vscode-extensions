@@ -1,69 +1,57 @@
 #!/usr/bin/env bash
 
-EXTENSIONS=(
-abusaidm.html-snippets
-ahmadawais.shades-of-purple
-alefragnani.Bookmarks
-alefragnani.project-manager
-apollographql.vscode-apollo
-atlassian.atlascode
-christian-kohler.npm-intellisense
-christian-kohler.path-intellisense
-codezombiech.gitignore
-CoenraadS.bracket-pair-colorizer
-DavidAnson.vscode-markdownlint
-dbaeumer.vscode-eslint
-DotJoshJohnson.xml
-eamodio.gitlens
-eg2.vscode-npm-script
-esbenp.prettier-vscode
-felixfbecker.php-intellisense
-formulahendry.auto-close-tag
-formulahendry.auto-rename-tag
-formulahendry.code-runner
-hollowtree.vue-snippets
-HookyQR.beautify
-ionutvmi.path-autocomplete
-kumar-harsh.graphql-for-vscode
-mhutchie.git-graph
-mikestead.dotenv
-ModoNoob.vscode-hipster-theme
-ms-azuretools.vscode-docker
-ms-kubernetes-tools.vscode-kubernetes-tools
-ms-python.python
-ms-vscode.Go
-ms-vscode.powershell
-ms-vscode.vscode-typescript-next
-ms-vsliveshare.vsliveshare
-msjsdiag.debugger-for-chrome
-octref.vetur
-PKief.material-icon-theme
-redhat.java
-redhat.vscode-xml
-redhat.vscode-yaml
-ryu1kn.partial-diff
-sysoev.language-stylus
-VisualStudioExptTeam.vscodeintellicode
-vscode-icons-team.vscode-icons
-wix.vscode-import-cost
-Zignd.html-css-class-completion
-)
+GIST_URL="https://gist.github.com/47904ee4f36b70c9d84a30d29d996aed.git"
 
 error_handler () {
-    if [[ $? -ne 0 ]]; then
+    if [[ "$?" -ne 0 ]]; then
+        echo "Error in $1 doing $2"
+        exit 1
+    fi
+}
+
+download_error_handler () {
+    if [[ "$?" -ne 0 ]]; then
         echo "Error downloading $1"
     else
         echo -e "Done\n"
     fi
 }
 
-download_extensions () {
-    for ext in "${EXTENSIONS[@]}"; do
-        code --install-extension "$ext";
-        error_handler "$ext"
-    done
+gitInstalled () {
+    which git
+    if [[  "$?" -ne 0 ]]; then
+        echo -e "Git is not installed\n"\
+            "Please run 'sudo apt-get install git' and try again"
+        exit 1
+    fi
 }
 
-download_extensions
+getExtensionsIds () {
+    git clone -q "$GIST_URL" "/tmp/gist"
+    error_handler "getExtensionsIds" "cloning gist"
+    echo -e "\n" >> /tmp/gist/vscode-extensions
+    error_handler "addNewLine" "adding new line to the end of the file"
+    while read ext; do
+        EXTENSIONS+=("$ext")
+    done < /tmp/gist/vscode-extensions
+    rm -rf "/tmp/gist"
+}
+
+install_extension () {
+    code --install-extension "$1";
+    download_error_handler "$1"
+}
+
+gitInstalled
+
+getExtensionsIds
+
+for ext in "${EXTENSIONS[@]}"; do
+    if [[ "$ext" != "" ]]; then
+        install_extension "$ext"
+    else
+        exit 0
+    fi
+done
 
 exit $?
